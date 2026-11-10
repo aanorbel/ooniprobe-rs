@@ -7,19 +7,28 @@ set -euo pipefail
 # Sources/Passport next to the manifest.
 #
 # The manifest points to the assets published on the GitHub release of this
-# build (the tag being built, or the rolling pre-release for any other build),
-# and pins the zip with its SHA-256 checksum, which is what
+# build and pins the zip with its SHA-256 checksum, which is what
 # `swift package compute-checksum` computes.
+#
+# Environment:
+#   RELEASE_TAG        release the assets are published to (set by
+#                      .github/workflows/build-ios.yml); defaults to the tag
+#                      being built, or "rolling" for any other build.
+#   GITHUB_REPOSITORY  owner/repo hosting the release; defaults to
+#                      ooni/ooniprobe-rs.
 #
 # Usage: create-swift-package <path/to/passport.xcframework.zip> <path/to/Package.swift>
 
 __zip=$1
 __output=$2
-if [[ "${GITHUB_REF_TYPE:-}" == "tag" && -n "${GITHUB_REF_NAME:-}" ]]; then
+if [[ -n "${RELEASE_TAG:-}" ]]; then
+	__tag="${RELEASE_TAG}"
+elif [[ "${GITHUB_REF_TYPE:-}" == "tag" && -n "${GITHUB_REF_NAME:-}" ]]; then
 	__tag="${GITHUB_REF_NAME}"
 else
 	__tag="rolling"
 fi
+__repo="${GITHUB_REPOSITORY:-ooni/ooniprobe-rs}"
 __checksum=$(shasum -a 256 "${__zip}" | cut -d ' ' -f 1)
 
 cat >"${__output}" <<MANIFEST
@@ -36,7 +45,7 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "passport",
-            url: "https://github.com/ooni/ooniprobe-rs/releases/download/${__tag}/passport.xcframework.zip",
+            url: "https://github.com/${__repo}/releases/download/${__tag}/passport.xcframework.zip",
             checksum: "${__checksum}"
         ),
         // UniFFI bindings: ooniprobe.swift from the same release.
