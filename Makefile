@@ -12,7 +12,7 @@ ANDROID_TARGETS := \
 	i686-linux-android \
 	x86_64-linux-android
 
-XCFRAMEWORK_DIR := ios/ooniProbe.xcframework
+XCFRAMEWORK_DIR := ios/passport.xcframework
 SWIFT_DIR := ios/Sources/OoniProbe
 
 IPHONEOS_SDK = $(shell xcrun --sdk iphoneos --show-sdk-path)
@@ -131,8 +131,14 @@ ios-xcframework: ios-universal-sim ios-bindings
 		-library target/ios-simulator-universal/release/libuniffi_ooniprobe.a -headers $(SWIFT_DIR) \
 		-output $(XCFRAMEWORK_DIR)
 
+.PHONY: ios-swift-package
+ios-swift-package: ios-xcframework
+	@rm -f ios/passport.xcframework.zip
+	cd ios && zip -qry passport.xcframework.zip passport.xcframework
+	./maven/ios/create-swift-package ios/passport.xcframework.zip ios/Package.swift
+
 .PHONY: ios
-ios: ios-xcframework
+ios: ios-swift-package
 
 .PHONY: clean-desktop
 clean-desktop:

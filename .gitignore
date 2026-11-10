@@ -2,3 +2,6 @@
 /target
 
 /include
+
+# iOS build output (make ios)
+/ios
